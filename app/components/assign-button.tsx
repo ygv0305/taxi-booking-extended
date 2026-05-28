@@ -1,0 +1,21 @@
+"use client";
+
+import { useFormStatus } from "react-dom";
+
+export function AssignButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition ${
+        disabled
+          ? "cursor-not-allowed bg-slate-200 text-slate-500"
+          : "bg-emerald-500 text-white hover:bg-emerald-400 disabled:bg-emerald-300"
+      }`}
+    >
+      {disabled ? "Assigned" : pending ? "Assigning..." : "Assign"}
+    </button>
+  );
+}
