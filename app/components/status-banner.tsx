@@ -13,9 +13,11 @@ export function StatusBanner({
 }) {
   return (
     <div
-      className={`rounded-[1.5rem] border px-5 py-4 text-sm font-medium shadow-[0_10px_30px_rgba(15,23,42,0.04)] ${
-        statusStyles[status] ?? statusStyles.info
-      }`}
+      className={`
+        rounded-[1.5rem] border px-5 py-4 text-sm font-medium
+        shadow-[0_10px_30px_rgba(15,23,42,0.04)]
+        ${statusStyles[status] ?? statusStyles.info}
+      `}
     >
       {message}
     </div>

@@ -9,12 +9,7 @@ import {
 } from "react";
 
 import { createBookingAction } from "@/app/lib/actions";
-import {
-  formatDateForDisplay,
-  formatDateForInput,
-  formatTimeForDisplay,
-  formatTimeForInput,
-} from "@/app/lib/date-time";
+import { formatDateForInput, formatTimeForInput } from "@/app/lib/date-time";
 import type {
   BookingActionState,
   BookingFieldErrors,
@@ -31,6 +26,26 @@ const initialBookingActionState: BookingActionState = {
   confirmation: null,
 };
 
+const formCardClassName = `
+  rounded-[2rem] border border-slate-200/80 bg-white/90 p-6
+  shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8
+`;
+
+const inputClassName = `
+  w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3
+  text-base text-slate-950 outline-none transition
+  focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100
+`;
+
+const formFooterClassName = `
+  flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row
+  sm:items-center sm:justify-between
+`;
+
+type BookingFormProps = {
+  onStateChange?: (state: BookingActionState) => void;
+};
+
 function readFormFields(formData: FormData): BookingFormFields {
   return {
     customerName: String(formData.get("customerName") ?? ""),
@@ -45,7 +60,7 @@ function readFormFields(formData: FormData): BookingFormFields {
   };
 }
 
-export function BookingForm() {
+export function BookingForm({ onStateChange }: BookingFormProps) {
   const [state, formAction] = useActionState(
     createBookingAction,
     initialBookingActionState,
@@ -65,6 +80,10 @@ export function BookingForm() {
       timeInputRef.current.value = formatTimeForInput(now);
     }
   }, []);
+
+  useEffect(() => {
+    onStateChange?.(state);
+  }, [onStateChange, state]);
 
   const errors =
     Object.keys(clientErrors).length > 0 ? clientErrors : state.fieldErrors;
@@ -95,7 +114,7 @@ export function BookingForm() {
   };
 
   return (
-    <div className="rounded-[2rem] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8">
+    <div className={formCardClassName}>
       <form action={formAction} onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="space-y-2">
@@ -105,7 +124,7 @@ export function BookingForm() {
             <input
               name="customerName"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("customerName")}
             />
             {errors.customerName ? (
@@ -120,7 +139,7 @@ export function BookingForm() {
               type="tel"
               inputMode="numeric"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("phone")}
             />
             {errors.phone ? (
@@ -134,7 +153,7 @@ export function BookingForm() {
             </span>
             <input
               name="unitNumber"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("unitNumber")}
             />
             {errors.unitNumber ? (
@@ -149,7 +168,7 @@ export function BookingForm() {
             <input
               name="streetNumber"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("streetNumber")}
             />
             {errors.streetNumber ? (
@@ -164,7 +183,7 @@ export function BookingForm() {
             <input
               name="streetName"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("streetName")}
             />
             {errors.streetName ? (
@@ -178,7 +197,7 @@ export function BookingForm() {
             </span>
             <input
               name="pickupSuburb"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("pickupSuburb")}
             />
             {errors.pickupSuburb ? (
@@ -192,7 +211,7 @@ export function BookingForm() {
             </span>
             <input
               name="destinationSuburb"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("destinationSuburb")}
             />
             {errors.destinationSuburb ? (
@@ -211,7 +230,7 @@ export function BookingForm() {
               name="pickupDate"
               type="date"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("pickupDate")}
             />
             {errors.pickupDate ? (
@@ -228,7 +247,7 @@ export function BookingForm() {
               name="pickupTime"
               type="time"
               required
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              className={inputClassName}
               onChange={() => clearError("pickupTime")}
             />
             {errors.pickupTime ? (
@@ -237,7 +256,7 @@ export function BookingForm() {
           </label>
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className={formFooterClassName}>
           <p className="max-w-xl text-sm leading-6 text-slate-500">
             Pickups cannot be scheduled in the past, and phone numbers must be
             10 to 12 digits long.
@@ -245,49 +264,6 @@ export function BookingForm() {
           <SubmitButton />
         </div>
       </form>
-
-      {state.status === "error" && state.message ? (
-        <div className="mt-5 rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
-          {state.message}
-        </div>
-      ) : null}
-
-      {state.status === "success" && state.confirmation ? (
-        <div className="mt-6 rounded-[1.75rem] border border-emerald-200 bg-emerald-50/90 p-6 shadow-inner shadow-emerald-100">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">
-            Booking confirmed
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-emerald-950">
-            {state.message}
-          </h3>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Reference
-              </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950">
-                {state.confirmation.reference}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Pickup date
-              </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950">
-                {formatDateForDisplay(state.confirmation.pickupDate)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Pickup time
-              </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950">
-                {formatTimeForDisplay(state.confirmation.pickupTime)}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
