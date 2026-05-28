@@ -36,8 +36,16 @@ export function normalizeReference(reference: string) {
   return reference.trim().toUpperCase();
 }
 
+export function normalizePhone(phone: string) {
+  return phone.trim();
+}
+
 export function validateReference(reference: string) {
   return /^BRN\d{5,}$/.test(reference);
+}
+
+export function validatePhone(phone: string) {
+  return /^\d{10,12}$/.test(phone);
 }
 
 export function validateBookingForm(
@@ -64,7 +72,7 @@ export function validateBookingForm(
 
   if (normalizedInput.phone === "") {
     fieldErrors.phone = "Phone is required.";
-  } else if (!/^\d{10,12}$/.test(normalizedInput.phone)) {
+  } else if (!validatePhone(normalizedInput.phone)) {
     fieldErrors.phone = "Phone must contain 10 to 12 digits.";
   }
 

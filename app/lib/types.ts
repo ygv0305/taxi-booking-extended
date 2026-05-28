@@ -20,12 +20,21 @@ export type BookingConfirmation = {
   pickupTime: string;
 };
 
+export type ActionFeedback = {
+  status: "success" | "info" | "error";
+  message: string;
+};
+
 export type BookingActionState = {
   status: "idle" | "success" | "error";
   message: string;
   fieldErrors: BookingFieldErrors;
   confirmation: BookingConfirmation | null;
 };
+
+export type BookingStatus = "pending" | "assigned" | "completed" | "cancelled";
+
+export type CancelledBy = "customer" | "admin";
 
 export type ValidatedBookingInput = {
   customerName: string;
@@ -40,6 +49,17 @@ export type ValidatedBookingInput = {
   pickupAt: Date;
 };
 
+export type BookingEditableFields = Pick<
+  BookingFormFields,
+  | "unitNumber"
+  | "streetNumber"
+  | "streetName"
+  | "pickupSuburb"
+  | "destinationSuburb"
+  | "pickupDate"
+  | "pickupTime"
+>;
+
 export type BookingRecord = {
   id: number;
   reference: string;
@@ -51,11 +71,25 @@ export type BookingRecord = {
   pickupSuburb: string | null;
   destinationSuburb: string | null;
   pickupAt: string;
+  pickupDate: string;
+  pickupTime: string;
   createdAt: string;
   assignedAt: string | null;
+  cancelledAt: string | null;
+  cancelledBy: CancelledBy | null;
+  driverId: string | null;
+  driverName: string | null;
+  driverVehicleLabel: string | null;
+  status: BookingStatus;
 };
 
-export type AssignBookingOutcome = {
-  status: "success" | "info" | "error";
-  message: string;
+export type DriverRecord = {
+  id: string;
+  name: string;
+  vehicleLabel: string | null;
+  active: boolean;
 };
+
+export type AssignBookingOutcome = ActionFeedback;
+export type CancelBookingOutcome = ActionFeedback;
+export type UpdateBookingOutcome = ActionFeedback;

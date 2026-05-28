@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { BookingForm } from "@/app/components/booking-form";
@@ -99,6 +100,22 @@ export default function HomePage() {
                     {formatTimeForDisplay(bookingState.confirmation.pickupTime)}
                   </p>
                 </div>
+              </div>
+              <div className="mt-5 border-t border-emerald-200/80 pt-5">
+                <p className="text-sm leading-6 text-emerald-800">
+                  Need to check the booking later? Use the customer portal with
+                  your booking reference and phone number.
+                </p>
+                <Link
+                  href={`/portal?reference=${bookingState.confirmation.reference}`}
+                  className={`
+                    mt-4 inline-flex min-h-11 items-center justify-center
+                    rounded-full bg-emerald-600 px-5 text-sm font-semibold
+                    text-white transition hover:bg-emerald-500
+                  `}
+                >
+                  Open customer portal
+                </Link>
               </div>
             </div>
           ) : null}

@@ -2,7 +2,17 @@
 
 import { useFormStatus } from "react-dom";
 
-export function AssignButton({ disabled }: { disabled: boolean }) {
+export function AssignButton({
+  disabled,
+  idleLabel = "Assign",
+  pendingLabel = "Assigning...",
+  disabledLabel = "Assigned",
+}: {
+  disabled: boolean;
+  idleLabel?: string;
+  pendingLabel?: string;
+  disabledLabel?: string;
+}) {
   const { pending } = useFormStatus();
 
   return (
@@ -19,7 +29,7 @@ export function AssignButton({ disabled }: { disabled: boolean }) {
         }
       `}
     >
-      {disabled ? "Assigned" : pending ? "Assigning..." : "Assign"}
+      {disabled ? disabledLabel : pending ? pendingLabel : idleLabel}
     </button>
   );
 }

@@ -1,11 +1,21 @@
 import Form from "next/form";
 
 import { AssignButton } from "@/app/components/assign-button";
+import { BookingStatusBadge } from "@/app/components/booking-status-badge";
+import { CancelButton } from "@/app/components/cancel-button";
 import { StatusBanner } from "@/app/components/status-banner";
-import { assignBookingAction } from "@/app/lib/actions";
+import {
+  assignBookingAction,
+  cancelAdminBookingAction,
+} from "@/app/lib/actions";
+import {
+  canAssignBooking,
+  canCancelBooking,
+  getActiveDrivers,
+  searchBookings,
+} from "@/app/lib/bookings";
 import { formatDatabaseDateTimeForDisplay } from "@/app/lib/date-time";
-import { searchBookings } from "@/app/lib/bookings";
-import type { BookingRecord } from "@/app/lib/types";
+import type { BookingRecord, DriverRecord } from "@/app/lib/types";
 import { normalizeReference, validateReference } from "@/app/lib/validation";
 
 export const dynamic = "force-dynamic";
@@ -22,31 +32,114 @@ function pickFirst(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getAssignmentStatusClassName(isAssigned: boolean) {
-  return `
-    inline-flex rounded-full px-3 py-1 text-xs font-semibold
-    ${
-      isAssigned
-        ? "bg-emerald-100 text-emerald-700"
-        : "bg-amber-100 text-amber-700"
-    }
-  `;
+function renderDriverLabel(booking: BookingRecord) {
+  if (!booking.driverName) {
+    return "Not assigned";
+  }
+
+  return booking.driverVehicleLabel
+    ? `${booking.driverName} (${booking.driverVehicleLabel})`
+    : booking.driverName;
+}
+
+function DriverAssignmentForm({
+  booking,
+  currentReference,
+  drivers,
+}: {
+  booking: BookingRecord;
+  currentReference: string;
+  drivers: DriverRecord[];
+}) {
+  const isAssignable = canAssignBooking(booking.status);
+
+  if (!isAssignable) {
+    return (
+      <p className="text-xs font-medium text-slate-500">
+        {booking.status === "assigned"
+          ? "Already assigned"
+          : booking.status === "completed"
+            ? "Completed"
+            : "Cancelled"}
+      </p>
+    );
+  }
+
+  return (
+    <form
+      action={assignBookingAction}
+      className={`
+        flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end
+      `}
+    >
+      <input type="hidden" name="reference" value={booking.reference} />
+      <input type="hidden" name="currentReference" value={currentReference} />
+      <select
+        name="driverId"
+        defaultValue=""
+        className={`
+          min-w-52 rounded-2xl border border-slate-200 bg-white px-4 py-2.5
+          text-sm text-slate-900 outline-none transition
+          focus:border-sky-400 focus:ring-4 focus:ring-sky-100
+        `}
+      >
+        <option value="" disabled>
+          Select driver
+        </option>
+        {drivers.map((driver) => (
+          <option key={driver.id} value={driver.id}>
+            {driver.vehicleLabel
+              ? `${driver.name} (${driver.vehicleLabel})`
+              : driver.name}
+          </option>
+        ))}
+      </select>
+      <AssignButton
+        disabled={drivers.length === 0}
+        idleLabel="Assign driver"
+        pendingLabel="Assigning..."
+        disabledLabel="No drivers"
+      />
+    </form>
+  );
+}
+
+function CancelBookingForm({
+  booking,
+  currentReference,
+}: {
+  booking: BookingRecord;
+  currentReference: string;
+}) {
+  if (!canCancelBooking(booking.status)) {
+    return null;
+  }
+
+  return (
+    <form action={cancelAdminBookingAction}>
+      <input type="hidden" name="reference" value={booking.reference} />
+      <input type="hidden" name="currentReference" value={currentReference} />
+      <CancelButton idleLabel="Cancel" pendingLabel="Cancelling..." />
+    </form>
+  );
 }
 
 function BookingResults({
   bookings,
   currentReference,
+  drivers,
 }: {
   bookings: BookingRecord[];
   currentReference: string;
+  drivers: DriverRecord[];
 }) {
   return (
     <>
       <div
         className={`
           hidden overflow-hidden rounded-[1.75rem] border
-          border-slate-200/80 bg-white
-          shadow-[0_18px_48px_rgba(15,23,42,0.08)] lg:block
+          border-slate-200/80 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)]
+          xl:block
         `}
       >
         <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -64,142 +157,138 @@ function BookingResults({
               <th className="px-5 py-4">Destination</th>
               <th className="px-5 py-4">Pickup At</th>
               <th className="px-5 py-4">Status</th>
-              <th className="px-5 py-4 text-right">Assign</th>
+              <th className="px-5 py-4">Driver</th>
+              <th className="px-5 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/80">
-            {bookings.map((booking) => {
-              const isAssigned = Boolean(booking.assignedAt);
-
-              return (
-                <tr key={booking.reference} className="align-top">
-                  <td className="px-5 py-4 font-semibold text-slate-950">
-                    {booking.reference}
-                  </td>
-                  <td className="px-5 py-4">
-                    <p className="font-medium text-slate-900">
-                      {booking.customerName}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {booking.streetNumber} {booking.streetName}
-                      {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
-                    </p>
-                  </td>
-                  <td className="px-5 py-4 text-slate-700">{booking.phone}</td>
-                  <td className="px-5 py-4 text-slate-700">
-                    {booking.pickupSuburb ?? "Not provided"}
-                  </td>
-                  <td className="px-5 py-4 text-slate-700">
-                    {booking.destinationSuburb ?? "Not provided"}
-                  </td>
-                  <td className="px-5 py-4 font-medium text-slate-900">
-                    {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className={getAssignmentStatusClassName(isAssigned)}>
-                      {isAssigned ? "Assigned" : "Unassigned"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <form action={assignBookingAction}>
-                      <input
-                        type="hidden"
-                        name="reference"
-                        value={booking.reference}
-                      />
-                      <input
-                        type="hidden"
-                        name="currentReference"
-                        value={currentReference}
-                      />
-                      <AssignButton disabled={isAssigned} />
-                    </form>
-                  </td>
-                </tr>
-              );
-            })}
+            {bookings.map((booking) => (
+              <tr key={booking.reference} className="align-top">
+                <td className="px-5 py-4 font-semibold text-slate-950">
+                  {booking.reference}
+                </td>
+                <td className="px-5 py-4">
+                  <p className="font-medium text-slate-900">
+                    {booking.customerName}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {booking.streetNumber} {booking.streetName}
+                    {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
+                  </p>
+                </td>
+                <td className="px-5 py-4 text-slate-700">{booking.phone}</td>
+                <td className="px-5 py-4 text-slate-700">
+                  {booking.pickupSuburb ?? "Not provided"}
+                </td>
+                <td className="px-5 py-4 text-slate-700">
+                  {booking.destinationSuburb ?? "Not provided"}
+                </td>
+                <td className="px-5 py-4 font-medium text-slate-900">
+                  {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
+                </td>
+                <td className="px-5 py-4">
+                  <BookingStatusBadge status={booking.status} />
+                </td>
+                <td className="px-5 py-4 text-slate-700">
+                  {renderDriverLabel(booking)}
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex flex-col items-end gap-3">
+                    <DriverAssignmentForm
+                      booking={booking}
+                      currentReference={currentReference}
+                      drivers={drivers}
+                    />
+                    <CancelBookingForm
+                      booking={booking}
+                      currentReference={currentReference}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <div className="grid gap-4 lg:hidden">
-        {bookings.map((booking) => {
-          const isAssigned = Boolean(booking.assignedAt);
-
-          return (
-            <article
-              key={booking.reference}
-              className={`
-                rounded-[1.5rem] border border-slate-200/80 bg-white p-5
-                shadow-[0_18px_48px_rgba(15,23,42,0.08)]
-              `}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Reference
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-950">
-                    {booking.reference}
-                  </p>
-                </div>
-                <span className={getAssignmentStatusClassName(isAssigned)}>
-                  {isAssigned ? "Assigned" : "Unassigned"}
-                </span>
-              </div>
-
-              <div className="mt-5 grid gap-3 text-sm text-slate-700">
-                <p>
-                  <span className="font-semibold text-slate-900">
-                    Customer:
-                  </span>{" "}
-                  {booking.customerName}
+      <div className="grid gap-4 xl:hidden">
+        {bookings.map((booking) => (
+          <article
+            key={booking.reference}
+            className={`
+              rounded-[1.5rem] border border-slate-200/80 bg-white p-5
+              shadow-[0_18px_48px_rgba(15,23,42,0.08)]
+            `}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Reference
                 </p>
-                <p>
-                  <span className="font-semibold text-slate-900">Phone:</span>{" "}
-                  {booking.phone}
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-900">Address:</span>{" "}
-                  {booking.streetNumber} {booking.streetName}
-                  {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-900">
-                    Pickup suburb:
-                  </span>{" "}
-                  {booking.pickupSuburb ?? "Not provided"}
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-900">
-                    Destination:
-                  </span>{" "}
-                  {booking.destinationSuburb ?? "Not provided"}
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-900">
-                    Pickup at:
-                  </span>{" "}
-                  {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
+                <p className="mt-1 text-lg font-semibold text-slate-950">
+                  {booking.reference}
                 </p>
               </div>
+              <BookingStatusBadge status={booking.status} />
+            </div>
 
-              <form action={assignBookingAction} className="mt-5">
-                <input
-                  type="hidden"
-                  name="reference"
-                  value={booking.reference}
-                />
-                <input
-                  type="hidden"
-                  name="currentReference"
-                  value={currentReference}
-                />
-                <AssignButton disabled={isAssigned} />
-              </form>
-            </article>
-          );
-        })}
+            <div className="mt-5 grid gap-3 text-sm text-slate-700">
+              <p>
+                <span className="font-semibold text-slate-900">Customer:</span>{" "}
+                {booking.customerName}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Phone:</span>{" "}
+                {booking.phone}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Address:</span>{" "}
+                {booking.streetNumber} {booking.streetName}
+                {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">
+                  Pickup suburb:
+                </span>{" "}
+                {booking.pickupSuburb ?? "Not provided"}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">
+                  Destination:
+                </span>{" "}
+                {booking.destinationSuburb ?? "Not provided"}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Pickup at:</span>{" "}
+                {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Driver:</span>{" "}
+                {renderDriverLabel(booking)}
+              </p>
+              {booking.cancelledAt ? (
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Cancelled:
+                  </span>{" "}
+                  {formatDatabaseDateTimeForDisplay(booking.cancelledAt)}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3">
+              <DriverAssignmentForm
+                booking={booking}
+                currentReference={currentReference}
+                drivers={drivers}
+              />
+              <CancelBookingForm
+                booking={booking}
+                currentReference={currentReference}
+              />
+            </div>
+          </article>
+        ))}
       </div>
     </>
   );
@@ -213,13 +302,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const bannerMessage = pickFirst(resolvedSearchParams.message);
 
   let bookings: BookingRecord[] = [];
+  let drivers: DriverRecord[] = [];
   let pageError = "";
 
   if (normalizedReference !== "" && !validateReference(normalizedReference)) {
     pageError = "Invalid booking reference format. Use a value like BRN00001.";
   } else {
     try {
-      bookings = await searchBookings(normalizedReference || undefined);
+      [bookings, drivers] = await Promise.all([
+        searchBookings(normalizedReference || undefined),
+        getActiveDrivers(),
+      ]);
     } catch {
       pageError =
         "Unable to load bookings right now. Check the database settings and try again.";
@@ -251,7 +344,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Search a booking by reference, or leave the field blank to load all
-            unassigned bookings due within the next two hours.
+            active unassigned bookings due within the next two hours.
           </p>
         </div>
 
@@ -280,7 +373,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             `}
           />
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Leave empty to show the upcoming unassigned queue.
+            Leave empty to show the upcoming active queue.
           </p>
           <button
             type="submit"
@@ -305,12 +398,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-              {hasSearch ? "Search result" : "Upcoming unassigned bookings"}
+              {hasSearch ? "Search result" : "Upcoming active bookings"}
             </h2>
             <p className="text-sm leading-6 text-slate-600">
               {hasSearch
                 ? `Showing bookings matching ${normalizedReference}.`
-                : "Bookings are ordered by pickup time."}
+                : "Bookings are ordered by pickup time and ready for dispatch."}
             </p>
           </div>
           {!pageError ? (
@@ -334,7 +427,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {hasSearch
                 ? "Try another booking reference or clear the search to view the default queue."
-                : "There are no unassigned bookings scheduled within the next two hours."}
+                : "There are no active unassigned bookings scheduled within the next two hours."}
             </p>
           </div>
         ) : null}
@@ -343,6 +436,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <BookingResults
             bookings={bookings}
             currentReference={normalizedReference}
+            drivers={drivers}
           />
         ) : null}
       </section>
