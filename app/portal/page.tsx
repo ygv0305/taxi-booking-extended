@@ -1,14 +1,9 @@
-import Form from "next/form";
-
 import { BookingStatusBadge } from "@/app/components/booking-status-badge";
 import { CancelButton } from "@/app/components/cancel-button";
+import { PortalLookupForm } from "@/app/components/portal-lookup-form";
 import { ResponseScrollController } from "@/app/components/response-scroll-controller";
 import { SaveButton } from "@/app/components/save-button";
 import { StatusBanner } from "@/app/components/status-banner";
-import {
-  AUTO_SCROLL_PARAM,
-  AUTO_SCROLL_RESPONSE_VALUE,
-} from "@/app/lib/auto-scroll";
 import {
   cancelPortalBookingAction,
   updatePortalBookingAction,
@@ -41,12 +36,6 @@ type PortalPageProps = {
 function pickFirst(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
-
-const inputClassName = `
-  mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3
-  text-base text-slate-900 outline-none transition
-  focus:border-sky-400 focus:ring-4 focus:ring-sky-100
-`;
 
 const feedbackAnchorId = "portal-feedback-anchor";
 
@@ -115,64 +104,10 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
           </p>
         </div>
 
-        <Form
-          action="/portal"
-          className={`
-            rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5
-          `}
-        >
-          <input
-            type="hidden"
-            name={AUTO_SCROLL_PARAM}
-            value={AUTO_SCROLL_RESPONSE_VALUE}
-          />
-          <label
-            htmlFor="reference"
-            className="text-sm font-semibold text-slate-900"
-          >
-            Booking reference
-          </label>
-          <input
-            id="reference"
-            name="reference"
-            defaultValue={normalizedReference}
-            placeholder="BRN00001"
-            autoComplete="off"
-            className={inputClassName}
-          />
-
-          <label
-            htmlFor="phone"
-            className="mt-4 block text-sm font-semibold text-slate-900"
-          >
-            Phone number
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            inputMode="numeric"
-            defaultValue={normalizedPhone}
-            placeholder="0212345678"
-            autoComplete="tel"
-            className={inputClassName}
-          />
-
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Use the same phone number that was entered when the booking was
-            created.
-          </p>
-          <button
-            type="submit"
-            className={`
-              mt-5 inline-flex min-h-12 items-center justify-center
-              rounded-full bg-slate-950 px-5 text-sm font-semibold text-white
-              transition hover:bg-slate-800
-            `}
-          >
-            Find booking
-          </button>
-        </Form>
+        <PortalLookupForm
+          initialReference={normalizedReference}
+          initialPhone={normalizedPhone}
+        />
       </section>
 
       <ResponseScrollController targetId={feedbackAnchorId} />

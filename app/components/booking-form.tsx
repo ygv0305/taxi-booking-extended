@@ -138,7 +138,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Customer name
+              Customer Name *
             </span>
             <input
               name="customerName"
@@ -152,7 +152,9 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Phone</span>
+            <span className="text-sm font-semibold text-slate-900">
+              Phone *
+            </span>
             <input
               name="phone"
               type="tel"
@@ -168,7 +170,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Unit number
+              Unit No
             </span>
             <input
               name="unitNumber"
@@ -182,7 +184,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Street number
+              Street No *
             </span>
             <input
               name="streetNumber"
@@ -197,7 +199,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2 sm:col-span-2">
             <span className="text-sm font-semibold text-slate-900">
-              Street name
+              Street Name *
             </span>
             <input
               name="streetName"
@@ -212,7 +214,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Pickup suburb
+              Pickup Suburb
             </span>
             <input
               name="pickupSuburb"
@@ -242,7 +244,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Pickup date
+              Pickup Date *
             </span>
             <input
               ref={dateInputRef}
@@ -259,7 +261,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-900">
-              Pickup time
+              Pickup Time *
             </span>
             <input
               ref={timeInputRef}

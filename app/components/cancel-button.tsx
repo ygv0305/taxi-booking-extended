@@ -2,6 +2,8 @@
 
 import { useFormStatus } from "react-dom";
 
+import { LoadingSpinner } from "./loading-spinner";
+
 export function CancelButton({
   disabled = false,
   idleLabel = "Cancel booking",
@@ -18,14 +20,21 @@ export function CancelButton({
       type="submit"
       disabled={disabled || pending}
       className={`
-        inline-flex min-h-10 items-center justify-center rounded-full
+        inline-flex min-h-10 items-center justify-center gap-2 rounded-full
         border border-rose-200 bg-white px-4 text-sm font-semibold
         text-rose-700 transition hover:border-rose-300 hover:bg-rose-50
         disabled:cursor-not-allowed disabled:border-slate-200
         disabled:bg-slate-100 disabled:text-slate-400
       `}
     >
-      {pending ? pendingLabel : idleLabel}
+      {pending ? (
+        <>
+          <LoadingSpinner className="h-4 w-4" />
+          {pendingLabel}
+        </>
+      ) : (
+        idleLabel
+      )}
     </button>
   );
 }

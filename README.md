@@ -10,6 +10,10 @@ The system stores bookings in MongoDB, generates booking references in the
 format `BRN00001`, supports named driver assignment, and allows customer/admin
 booking updates based on the booking lifecycle.
 
+## Deployed Website URL
+
+https://taxi-booking-extended.vercel.app/
+
 ## Technology Stack
 
 - Framework: `Next.js 16`
@@ -22,7 +26,7 @@ booking updates based on the booking lifecycle.
 - Linting: `ESLint`
 - Testing: Node test runner with `node:test`
 
-## Run and Build Locally
+## How to Run and Build Locally
 
 ### Prerequisites
 
@@ -120,7 +124,7 @@ Implemented in `app/lib/bookings.ts`:
   - `completed`
   - `cancelled`
 
-## Extended Features
+## Extended Features Descriptions
 
 ### 1. Customer Portal
 

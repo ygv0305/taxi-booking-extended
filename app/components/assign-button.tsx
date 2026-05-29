@@ -2,6 +2,8 @@
 
 import { useFormStatus } from "react-dom";
 
+import { LoadingSpinner } from "./loading-spinner";
+
 export function AssignButton({
   disabled,
   idleLabel = "Assign",
@@ -20,7 +22,8 @@ export function AssignButton({
       type="submit"
       disabled={disabled || pending}
       className={`
-        inline-flex min-h-10 items-center justify-center rounded-full px-4
+        inline-flex min-h-10 items-center justify-center gap-2 rounded-full
+        px-4
         text-sm font-semibold transition
         ${
           disabled
@@ -29,7 +32,16 @@ export function AssignButton({
         }
       `}
     >
-      {disabled ? disabledLabel : pending ? pendingLabel : idleLabel}
+      {disabled ? (
+        disabledLabel
+      ) : pending ? (
+        <>
+          <LoadingSpinner className="h-4 w-4" />
+          {pendingLabel}
+        </>
+      ) : (
+        idleLabel
+      )}
     </button>
   );
 }

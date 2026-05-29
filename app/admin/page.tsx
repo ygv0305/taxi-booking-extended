@@ -1,14 +1,9 @@
-import Form from "next/form";
-
+import { AdminSearchForm } from "@/app/components/admin-search-form";
 import { AssignButton } from "@/app/components/assign-button";
 import { BookingStatusBadge } from "@/app/components/booking-status-badge";
 import { CancelButton } from "@/app/components/cancel-button";
 import { ResponseScrollController } from "@/app/components/response-scroll-controller";
 import { StatusBanner } from "@/app/components/status-banner";
-import {
-  AUTO_SCROLL_PARAM,
-  AUTO_SCROLL_RESPONSE_VALUE,
-} from "@/app/lib/auto-scroll";
 import {
   assignBookingAction,
   cancelAdminBookingAction,
@@ -361,49 +356,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </p>
         </div>
 
-        <Form
-          action="/admin"
-          className={`
-            rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5
-          `}
-        >
-          <input
-            type="hidden"
-            name={AUTO_SCROLL_PARAM}
-            value={AUTO_SCROLL_RESPONSE_VALUE}
-          />
-          <label
-            htmlFor="reference"
-            className="text-sm font-semibold text-slate-900"
-          >
-            Booking reference
-          </label>
-          <input
-            id="reference"
-            name="reference"
-            defaultValue={normalizedReference}
-            placeholder="BRN00001"
-            autoComplete="off"
-            className={`
-              mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4
-              py-3 text-base text-slate-900 outline-none transition
-              focus:border-sky-400 focus:ring-4 focus:ring-sky-100
-            `}
-          />
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Leave empty to show the upcoming active queue.
-          </p>
-          <button
-            type="submit"
-            className={`
-              mt-5 inline-flex min-h-12 items-center justify-center
-              rounded-full bg-slate-950 px-5 text-sm font-semibold text-white
-              transition hover:bg-slate-800
-            `}
-          >
-            Search bookings
-          </button>
-        </Form>
+        <AdminSearchForm initialReference={normalizedReference} />
       </section>
 
       <ResponseScrollController targetId={feedbackAnchorId} />

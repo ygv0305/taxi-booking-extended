@@ -94,6 +94,8 @@ const defaultDrivers = [
   { name: "Mei Chen", vehicleLabel: "Kia Niro - CAB 24" },
 ];
 
+let driverRosterSeedPromise: Promise<void> | null = null;
+
 const bookingSchema = new Schema<BookingDocument>(
   {
     bookingNumber: {
@@ -497,7 +499,13 @@ async function allocateBookingNumber() {
 }
 
 async function ensureDriverRosterSeeded() {
-  await Promise.all(
+  if (driverRosterSeedPromise) {
+    return driverRosterSeedPromise;
+  }
+
+  // Seed the static driver roster once per server process to avoid
+  // repeating the same writes on every admin page request.
+  driverRosterSeedPromise = Promise.all(
     defaultDrivers.map((driver) =>
       DriverModel.updateOne(
         { name: driver.name },
@@ -510,7 +518,14 @@ async function ensureDriverRosterSeeded() {
         { upsert: true },
       ).exec(),
     ),
-  );
+  )
+    .then(() => undefined)
+    .catch((error) => {
+      driverRosterSeedPromise = null;
+      throw error;
+    });
+
+  return driverRosterSeedPromise;
 }
 
 function buildEditableBookingFields(

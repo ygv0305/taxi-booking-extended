@@ -40,17 +40,6 @@ export default function HomePage() {
             shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8
           `}
         >
-          {bookingState.status === "error" && bookingState.message ? (
-            <div
-              className={`
-                mt-6 rounded-[1.5rem] border border-rose-200 bg-rose-50
-                px-5 py-4 text-sm text-rose-700
-              `}
-            >
-              {bookingState.message}
-            </div>
-          ) : null}
-
           {bookingState.status === "success" && bookingState.confirmation ? (
             <div
               className={`
@@ -122,6 +111,17 @@ export default function HomePage() {
               </p>
             </>
           )}
+
+          {bookingState.status === "error" && bookingState.message ? (
+            <div
+              className={`
+                mt-6 rounded-[1.5rem] border border-rose-200 bg-rose-50
+                px-5 py-4 text-sm text-rose-700
+              `}
+            >
+              {bookingState.message}
+            </div>
+          ) : null}
         </div>
 
         <BookingForm onStateChange={setBookingState} />
