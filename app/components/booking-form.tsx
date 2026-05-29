@@ -68,6 +68,12 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
   const [clientErrors, setClientErrors] = useState<BookingFieldErrors>({});
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+  const hasPendingServerSubmit = useRef(false);
+
+  const getScrollBehavior = (): ScrollBehavior =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth";
 
   useEffect(() => {
     const now = new Date();
@@ -84,6 +90,18 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
   useEffect(() => {
     onStateChange?.(state);
   }, [onStateChange, state]);
+
+  useEffect(() => {
+    if (!hasPendingServerSubmit.current || state.status === "idle") {
+      return;
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: getScrollBehavior(),
+    });
+    hasPendingServerSubmit.current = false;
+  }, [state]);
 
   const errors =
     Object.keys(clientErrors).length > 0 ? clientErrors : state.fieldErrors;
@@ -111,6 +129,7 @@ export function BookingForm({ onStateChange }: BookingFormProps) {
     }
 
     setClientErrors({});
+    hasPendingServerSubmit.current = true;
   };
 
   return (

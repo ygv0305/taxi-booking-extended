@@ -40,17 +40,6 @@ export default function HomePage() {
             shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8
           `}
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
-            Booking Details
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Arrange a pickup
-          </h2>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-            Enter the customer and pickup details below. The booking reference
-            is generated after the request is saved to MySQL.
-          </p>
-
           {bookingState.status === "error" && bookingState.message ? (
             <div
               className={`
@@ -65,7 +54,7 @@ export default function HomePage() {
           {bookingState.status === "success" && bookingState.confirmation ? (
             <div
               className={`
-                mt-6 rounded-[1.75rem] border border-emerald-200
+                rounded-[1.75rem] border border-emerald-200
                 bg-emerald-50/90 p-6 shadow-inner shadow-emerald-100
               `}
             >
@@ -118,7 +107,21 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Booking Details
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                Arrange a pickup
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
+                Enter your contact and the pickup details in the booking form.
+                The booking confirmation will be displayed below on successful
+                application.
+              </p>
+            </>
+          )}
         </div>
 
         <BookingForm onStateChange={setBookingState} />

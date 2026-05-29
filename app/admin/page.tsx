@@ -3,13 +3,17 @@ import Form from "next/form";
 import { AssignButton } from "@/app/components/assign-button";
 import { BookingStatusBadge } from "@/app/components/booking-status-badge";
 import { CancelButton } from "@/app/components/cancel-button";
+import { ResponseScrollController } from "@/app/components/response-scroll-controller";
 import { StatusBanner } from "@/app/components/status-banner";
+import {
+  AUTO_SCROLL_PARAM,
+  AUTO_SCROLL_RESPONSE_VALUE,
+} from "@/app/lib/auto-scroll";
 import {
   assignBookingAction,
   cancelAdminBookingAction,
 } from "@/app/lib/actions";
 import {
-  canAssignBooking,
   canCancelBooking,
   getActiveDrivers,
   searchBookings,
@@ -42,6 +46,8 @@ function renderDriverLabel(booking: BookingRecord) {
     : booking.driverName;
 }
 
+const feedbackAnchorId = "admin-feedback-anchor";
+
 function DriverAssignmentForm({
   booking,
   currentReference,
@@ -51,16 +57,14 @@ function DriverAssignmentForm({
   currentReference: string;
   drivers: DriverRecord[];
 }) {
-  const isAssignable = canAssignBooking(booking.status);
+  const isAssigned = booking.status === "assigned" && booking.driverId !== null;
+  const isAssignable = booking.status === "pending" || isAssigned;
+  const assignedDriverLabel = renderDriverLabel(booking);
 
   if (!isAssignable) {
     return (
       <p className="text-xs font-medium text-slate-500">
-        {booking.status === "assigned"
-          ? "Already assigned"
-          : booking.status === "completed"
-            ? "Completed"
-            : "Cancelled"}
+        {booking.status === "completed" ? "Completed" : "Cancelled"}
       </p>
     );
   }
@@ -70,35 +74,46 @@ function DriverAssignmentForm({
       action={assignBookingAction}
       className={`
         flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end
+        xl:flex-col xl:items-end xl:justify-start
       `}
     >
       <input type="hidden" name="reference" value={booking.reference} />
       <input type="hidden" name="currentReference" value={currentReference} />
       <select
         name="driverId"
-        defaultValue=""
+        defaultValue={isAssigned ? (booking.driverId ?? "") : ""}
+        disabled={isAssigned}
         className={`
-          min-w-52 rounded-2xl border border-slate-200 bg-white px-4 py-2.5
-          text-sm text-slate-900 outline-none transition
+          w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4
+          py-2.5 text-sm text-slate-900 outline-none transition sm:min-w-52
+          xl:min-w-44 2xl:min-w-52
+          disabled:cursor-not-allowed disabled:bg-slate-100
+          disabled:text-slate-500
           focus:border-sky-400 focus:ring-4 focus:ring-sky-100
         `}
       >
-        <option value="" disabled>
-          Select driver
-        </option>
-        {drivers.map((driver) => (
-          <option key={driver.id} value={driver.id}>
-            {driver.vehicleLabel
-              ? `${driver.name} (${driver.vehicleLabel})`
-              : driver.name}
-          </option>
-        ))}
+        {isAssigned ? (
+          <option value={booking.driverId ?? ""}>{assignedDriverLabel}</option>
+        ) : (
+          <>
+            <option value="" disabled>
+              Select driver
+            </option>
+            {drivers.map((driver) => (
+              <option key={driver.id} value={driver.id}>
+                {driver.vehicleLabel
+                  ? `${driver.name} (${driver.vehicleLabel})`
+                  : driver.name}
+              </option>
+            ))}
+          </>
+        )}
       </select>
       <AssignButton
-        disabled={drivers.length === 0}
-        idleLabel="Assign driver"
+        disabled={isAssigned || drivers.length === 0}
+        idleLabel="Assign"
         pendingLabel="Assigning..."
-        disabledLabel="No drivers"
+        disabledLabel={isAssigned ? "Assigned" : "No drivers"}
       />
     </form>
   );
@@ -142,73 +157,71 @@ function BookingResults({
           xl:block
         `}
       >
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead
-            className={`
-              bg-slate-50/80 text-left text-xs font-semibold uppercase
-              tracking-[0.22em] text-slate-500
-            `}
-          >
-            <tr>
-              <th className="px-5 py-4">Reference</th>
-              <th className="px-5 py-4">Customer</th>
-              <th className="px-5 py-4">Phone</th>
-              <th className="px-5 py-4">Pickup</th>
-              <th className="px-5 py-4">Destination</th>
-              <th className="px-5 py-4">Pickup At</th>
-              <th className="px-5 py-4">Status</th>
-              <th className="px-5 py-4">Driver</th>
-              <th className="px-5 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200/80">
-            {bookings.map((booking) => (
-              <tr key={booking.reference} className="align-top">
-                <td className="px-5 py-4 font-semibold text-slate-950">
-                  {booking.reference}
-                </td>
-                <td className="px-5 py-4">
-                  <p className="font-medium text-slate-900">
-                    {booking.customerName}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {booking.streetNumber} {booking.streetName}
-                    {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
-                  </p>
-                </td>
-                <td className="px-5 py-4 text-slate-700">{booking.phone}</td>
-                <td className="px-5 py-4 text-slate-700">
-                  {booking.pickupSuburb ?? "Not provided"}
-                </td>
-                <td className="px-5 py-4 text-slate-700">
-                  {booking.destinationSuburb ?? "Not provided"}
-                </td>
-                <td className="px-5 py-4 font-medium text-slate-900">
-                  {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
-                </td>
-                <td className="px-5 py-4">
-                  <BookingStatusBadge status={booking.status} />
-                </td>
-                <td className="px-5 py-4 text-slate-700">
-                  {renderDriverLabel(booking)}
-                </td>
-                <td className="px-5 py-4">
-                  <div className="flex flex-col items-end gap-3">
-                    <DriverAssignmentForm
-                      booking={booking}
-                      currentReference={currentReference}
-                      drivers={drivers}
-                    />
-                    <CancelBookingForm
-                      booking={booking}
-                      currentReference={currentReference}
-                    />
-                  </div>
-                </td>
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead
+              className={`
+                bg-slate-50/80 text-left text-xs font-semibold uppercase
+                tracking-[0.22em] text-slate-500
+              `}
+            >
+              <tr>
+                <th className="px-5 py-4">Reference</th>
+                <th className="px-5 py-4">Customer</th>
+                <th className="px-5 py-4">Phone</th>
+                <th className="px-5 py-4">Pickup</th>
+                <th className="px-5 py-4">Destination</th>
+                <th className="px-5 py-4">Pickup At</th>
+                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200/80">
+              {bookings.map((booking) => (
+                <tr key={booking.reference} className="align-top">
+                  <td className="px-5 py-4 font-semibold text-slate-950">
+                    {booking.reference}
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-slate-900">
+                      {booking.customerName}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {booking.streetNumber} {booking.streetName}
+                      {booking.unitNumber ? `, Unit ${booking.unitNumber}` : ""}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 text-slate-700">{booking.phone}</td>
+                  <td className="px-5 py-4 text-slate-700">
+                    {booking.pickupSuburb ?? "Not provided"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-700">
+                    {booking.destinationSuburb ?? "Not provided"}
+                  </td>
+                  <td className="px-5 py-4 font-medium text-slate-900">
+                    {formatDatabaseDateTimeForDisplay(booking.pickupAt)}
+                  </td>
+                  <td className="px-5 py-4">
+                    <BookingStatusBadge status={booking.status} />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-col items-end gap-3">
+                      <DriverAssignmentForm
+                        booking={booking}
+                        currentReference={currentReference}
+                        drivers={drivers}
+                      />
+                      <CancelBookingForm
+                        booking={booking}
+                        currentReference={currentReference}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="grid gap-4 xl:hidden">
@@ -354,6 +367,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5
           `}
         >
+          <input
+            type="hidden"
+            name={AUTO_SCROLL_PARAM}
+            value={AUTO_SCROLL_RESPONSE_VALUE}
+          />
           <label
             htmlFor="reference"
             className="text-sm font-semibold text-slate-900"
@@ -387,6 +405,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </button>
         </Form>
       </section>
+
+      <ResponseScrollController targetId={feedbackAnchorId} />
+      <div id={feedbackAnchorId} aria-hidden="true" />
 
       {bannerStatus && bannerMessage ? (
         <StatusBanner status={bannerStatus} message={bannerMessage} />

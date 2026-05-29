@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { SiteNav } from "@/app/components/site-nav";
 
@@ -29,33 +28,10 @@ export default function RootLayout({
           <header className="border-b border-white/60 bg-white/65 backdrop-blur">
             <div
               className={`
-                mx-auto flex max-w-6xl items-center justify-between px-4 py-4
+                mx-auto flex max-w-6xl items-center justify-center px-4 py-4
                 sm:px-6 lg:px-8
               `}
             >
-              <Link
-                href="/"
-                className={`
-                  group inline-flex items-center gap-3
-                `}
-              >
-                <span
-                  className={`
-                    inline-flex h-11 w-11 items-center justify-center
-                    rounded-2xl bg-slate-950 text-sm font-semibold text-white
-                    shadow-lg shadow-slate-950/20
-                  `}
-                >
-                  C
-                </span>
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.26em] text-slate-500">
-                    City Cabs
-                  </p>
-                  <p className="text-sm text-slate-700">Booking and dispatch</p>
-                </div>
-              </Link>
-
               <SiteNav />
             </div>
           </header>

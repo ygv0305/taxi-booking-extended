@@ -2,8 +2,13 @@ import Form from "next/form";
 
 import { BookingStatusBadge } from "@/app/components/booking-status-badge";
 import { CancelButton } from "@/app/components/cancel-button";
+import { ResponseScrollController } from "@/app/components/response-scroll-controller";
 import { SaveButton } from "@/app/components/save-button";
 import { StatusBanner } from "@/app/components/status-banner";
+import {
+  AUTO_SCROLL_PARAM,
+  AUTO_SCROLL_RESPONSE_VALUE,
+} from "@/app/lib/auto-scroll";
 import {
   cancelPortalBookingAction,
   updatePortalBookingAction,
@@ -42,6 +47,8 @@ const inputClassName = `
   text-base text-slate-900 outline-none transition
   focus:border-sky-400 focus:ring-4 focus:ring-sky-100
 `;
+
+const feedbackAnchorId = "portal-feedback-anchor";
 
 export default async function PortalPage({ searchParams }: PortalPageProps) {
   const resolvedSearchParams = await searchParams;
@@ -114,6 +121,11 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
             rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5
           `}
         >
+          <input
+            type="hidden"
+            name={AUTO_SCROLL_PARAM}
+            value={AUTO_SCROLL_RESPONSE_VALUE}
+          />
           <label
             htmlFor="reference"
             className="text-sm font-semibold text-slate-900"
@@ -162,6 +174,9 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
           </button>
         </Form>
       </section>
+
+      <ResponseScrollController targetId={feedbackAnchorId} />
+      <div id={feedbackAnchorId} aria-hidden="true" />
 
       {bannerStatus && bannerMessage ? (
         <StatusBanner status={bannerStatus} message={bannerMessage} />

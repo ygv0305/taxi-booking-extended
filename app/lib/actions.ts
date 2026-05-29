@@ -20,6 +20,7 @@ import {
   validatePhone,
   validateReference,
 } from "./validation.ts";
+import { AUTO_SCROLL_PARAM, AUTO_SCROLL_RESPONSE_VALUE } from "./auto-scroll.ts";
 
 function readBookingFormData(formData: FormData): BookingFormFields {
   return {
@@ -62,6 +63,7 @@ function buildAdminRedirectUrl(
 
   params.set("status", status);
   params.set("message", message);
+  params.set(AUTO_SCROLL_PARAM, AUTO_SCROLL_RESPONSE_VALUE);
 
   return `/admin?${params.toString()}`;
 }
@@ -89,6 +91,8 @@ function buildPortalRedirectUrl(
   if (message) {
     params.set("message", message);
   }
+
+  params.set(AUTO_SCROLL_PARAM, AUTO_SCROLL_RESPONSE_VALUE);
 
   const search = params.toString();
   return search ? `/portal?${search}` : "/portal";
